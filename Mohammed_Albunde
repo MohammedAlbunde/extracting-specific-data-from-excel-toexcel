@@ -1,0 +1,61 @@
+#Creator: Mohammed Al-Bunde
+# Export data from data base( Excel file ) to another excel file
+
+import pandas as pd
+
+# Read the Excel file
+file_name = "DataBase_ResultsAndLimits.xlsx"
+df = pd.read_excel(file_name)
+
+# Ask the user for the part number
+part_number = input("Enter the part number: ")
+
+try:
+    # Get the specified sheet from the Excel file
+    sheet = pd.read_excel(file_name, sheet_name=part_number)
+except XLRDError:
+    print(f"The part number '{part_number}' does not exist in the workbook.")
+    exit()
+
+# Ask the user for the serial number
+serial_number = input("Enter the serial number: ")
+
+try:
+    if serial_number not in sheet["Motor SN"].tolist():
+        raise ValueError
+except ValueError:
+    print(f"The serial number '{serial_number}' does not exist in the sheet '{part_number}'.")
+    exit()
+
+# Get the row with the specified serial number
+row = sheet.loc[sheet["Motor SN"] == serial_number]
+
+# Ask the user for the reading name
+reading_name = input("Enter the reading name: ")
+
+try:
+    # Extract the specified reading from the row
+    reading = row[reading_name]
+except KeyError:
+    print(f"The reading '{reading_name}' does not exist in the sheet '{part_number}'.")
+    exit()
+
+# Create a new Excel file with the extracted data
+new_file_name = f"{reading_name}_{serial_number}.xlsx"
+reading.to_excel(new_file_name, index=False)
+
+# Ask the user if they want to extract more readings
+while True:
+    more_readings = input("Do you want to extract more readings? (yes/no)")
+    if more_readings == "yes":
+        reading_name = input("Enter the next reading name: ")
+        try:
+            reading = pd.concat([reading, row[reading_name]], axis=1)
+        except KeyError:
+            print(f"The reading '{reading_name}' does not exist in the sheet '{part_number}'.")
+            continue
+        reading.to_excel(new_file_name, index=False)
+    else:
+        break
+
+print(f"Readings have been extracted to the new Excel file '{new_file_name}'.")
